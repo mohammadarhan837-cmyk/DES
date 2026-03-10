@@ -9,10 +9,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@types/node": "^22.19.15",
-    "hardhat": "^3.1.11",
+    "ethers": "^5.8.0",
+    "hardhat": "^2.22.3",
     "typescript": "~5.8.0"
   }
 }

@@ -54,6 +54,24 @@ const projectSchema = new mongoose.Schema(
       default: "pending",
     },
 
+    // 👇 NEW FIELD FOR FREELANCER APPLICATION SYSTEM
+    applicants: [
+      {
+        freelancer: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        proposal: {
+          type: String,
+          required: true,
+        },
+        appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     status: {
       type: String,
       enum: ["open", "in-progress", "completed", "terminated"],

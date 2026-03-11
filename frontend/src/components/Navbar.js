@@ -1,24 +1,27 @@
 import { Link } from "react-router-dom";
-
+<Link to="/projects" style={{color:"white", textDecoration:"none"}}>Projects</Link>
 function Navbar() {
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "15px 40px",
-        background: "#0f172a",
-        color: "white",
-      }}
-    >
-      <h2>DES</h2>
+    <nav style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "15px 50px",
+      background: "#0f172a",
+      color: "white"
+    }}>
 
-      <div style={{ display: "flex", gap: "20px" }}>
-        <Link to="/" style={{ color: "white" }}>Home</Link>
-        <Link to="/login" style={{ color: "white" }}>Login</Link>
-        <Link to="/register" style={{ color: "white" }}>Register</Link>
-        <Link to="/dashboard" style={{ color: "white" }}>Dashboard</Link>
+      <h2 style={{color:"#38bdf8"}}>DES</h2>
+
+      <div style={{display:"flex", gap:"25px"}}>
+
+        <Link to="/" style={{color:"white", textDecoration:"none"}}>Home</Link>
+        <Link to="/login" style={{color:"white", textDecoration:"none"}}>Login</Link>
+        <Link to="/register" style={{color:"white", textDecoration:"none"}}>Register</Link>
+        <Link to="/dashboard" style={{color:"white", textDecoration:"none"}}>Dashboard</Link>
+
       </div>
+
     </nav>
   );
 }

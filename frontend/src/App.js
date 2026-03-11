@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-
+import BrowseProjects from "./pages/BrowseProjects";
+<Route path="/projects" element={<BrowseProjects />} />
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";

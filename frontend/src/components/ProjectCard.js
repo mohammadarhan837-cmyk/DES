@@ -1,4 +1,7 @@
+import { Link } from "react-router-dom";
+
 function ProjectCard() {
+
   return (
 
     <div style={{
@@ -10,18 +13,20 @@ function ProjectCard() {
 
       <h3>Blockchain Website</h3>
 
-      <p>Need a developer to build smart contract based system.</p>
+      <p>Need a developer to build smart contract system.</p>
 
       <h4>$500</h4>
 
-      <button style={{
-        padding:"8px 15px",
-        background:"#2563eb",
-        color:"white",
-        border:"none"
-      }}>
-        Apply
-      </button>
+      <Link to="/project/1">
+        <button style={{
+          padding:"8px 15px",
+          background:"#2563eb",
+          color:"white",
+          border:"none"
+        }}>
+          View Details
+        </button>
+      </Link>
 
     </div>
 

@@ -21,7 +21,7 @@ exports.createProject = async (req, res) => {
       project,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -35,7 +35,7 @@ exports.getAllProjects = async (req, res) => {
 
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -54,7 +54,7 @@ exports.getProjectById = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -70,7 +70,7 @@ exports.applyToProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Check if freelancer already applied
+    // Prevent duplicate applications
     const alreadyApplied = project.applicants.find(
       (app) => app.freelancer.toString() === req.user._id.toString()
     );
@@ -93,7 +93,7 @@ exports.applyToProject = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -108,10 +108,17 @@ exports.getApplicants = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    // Only project owner (client) can view applicants
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to view applicants",
+      });
+    }
+
     res.json(project.applicants);
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -127,6 +134,24 @@ exports.selectFreelancer = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    // Only project owner can select freelancer
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to select freelancer",
+      });
+    }
+
+    // Check if freelancer applied
+    const applied = project.applicants.find(
+      (app) => app.freelancer.toString() === freelancerId
+    );
+
+    if (!applied) {
+      return res.status(400).json({
+        message: "Freelancer did not apply to this project",
+      });
+    }
+
     project.freelancer = freelancerId;
     project.status = "in-progress";
 
@@ -138,6 +163,107 @@ exports.selectFreelancer = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= FREELANCER RESPOND TO DEADLINE =================
+exports.respondToDeadline = async (req, res) => {
+  try {
+    const { action, newDeadline } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only assigned freelancer can respond
+    if (project.freelancer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to respond to deadline",
+      });
+    }
+
+    if (action === "accept") {
+      project.finalDeadline = project.proposedDeadline;
+      project.deadlineStatus = "finalized";
+    }
+
+    else if (action === "reject") {
+      if (!newDeadline) {
+        return res.status(400).json({
+          message: "Please provide a new deadline",
+        });
+      }
+
+      project.suggestedDeadline = newDeadline;
+      project.deadlineStatus = "negotiating";
+    }
+
+    await project.save();
+
+    res.json({
+      message: "Response submitted successfully",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= CLIENT RESPOND TO SUGGESTED DEADLINE =================
+exports.clientRespondToDeadline = async (req, res) => {
+  try {
+    const { action } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only client can respond
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    if (action === "accept") {
+      project.finalDeadline = project.suggestedDeadline;
+      project.deadlineStatus = "finalized";
+    }
+
+    await project.save();
+
+    res.json({
+      message: "Client response saved",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= GET DEADLINE DETAILS =================
+exports.getDeadline = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    res.json({
+      proposedDeadline: project.proposedDeadline,
+      suggestedDeadline: project.suggestedDeadline,
+      finalDeadline: project.finalDeadline,
+      deadlineStatus: project.deadlineStatus,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

@@ -8,6 +8,9 @@ const {
   applyToProject,
   getApplicants,
   selectFreelancer,
+  respondToDeadline,
+  clientRespondToDeadline,
+  getDeadline
 } = require("../controllers/projectController");
 
 const protect = require("../middleware/authMiddleware");
@@ -39,5 +42,15 @@ router.get("/:id/applicants", protect, authorizeRoles("client"), getApplicants);
 // Client selects freelancer for project
 router.put("/:id/select", protect, authorizeRoles("client"), selectFreelancer);
 
+// ================= DEADLINE NEGOTIATION =================
+
+// Freelancer responds (accept/reject)
+router.put("/:id/deadline/respond", protect, authorizeRoles("freelancer"), respondToDeadline);
+
+// Client responds to suggestion
+router.put("/:id/deadline/client", protect, authorizeRoles("client"), clientRespondToDeadline);
+
+// Get deadline details
+router.get("/:id/deadline", protect, getDeadline);
 
 module.exports = router;

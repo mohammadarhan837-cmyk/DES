@@ -33,7 +33,7 @@ exports.registerUser = async (req, res) => {
     });
 
     // Create verification link
-    const verificationLink = `http://localhost:5000/api/auth/verify/${verificationToken}`;
+    const verificationLink = `http://10.10.70.215:5000/api/auth/verify/${verificationToken}`;
 
     // Send email
     await sendEmail(

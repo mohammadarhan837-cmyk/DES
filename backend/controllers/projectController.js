@@ -355,3 +355,41 @@ exports.addRating = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// ================= SKILL MATCHING =================
+const User = require("../models/User");
+
+exports.matchFreelancers = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const freelancers = await User.find({ role: "freelancer" });
+
+    const results = freelancers.map((freelancer) => {
+      const matchingSkills = freelancer.skills.filter((skill) =>
+        project.requiredSkills.includes(skill)
+      );
+
+      const matchPercentage =
+        (matchingSkills.length / project.requiredSkills.length) * 100;
+
+      return {
+        freelancerId: freelancer._id,
+        name: freelancer.name,
+        skills: freelancer.skills,
+        matchPercentage,
+      };
+    });
+
+    // Sort by best match
+    results.sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    res.json(results);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

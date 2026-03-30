@@ -267,3 +267,52 @@ exports.getDeadline = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// ================= ADD PROGRESS UPDATE =================
+exports.addProgressUpdate = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only assigned freelancer can update progress
+    if (project.freelancer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to update progress",
+      });
+    }
+
+    project.progressUpdates.push({ text });
+
+    // Update last update time
+    project.lastUpdate = new Date();
+
+    await project.save();
+
+    res.json({
+      message: "Progress updated successfully",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= GET PROGRESS UPDATES =================
+exports.getProgressUpdates = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    res.json(project.progressUpdates);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

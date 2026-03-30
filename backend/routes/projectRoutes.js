@@ -10,7 +10,9 @@ const {
   selectFreelancer,
   respondToDeadline,
   clientRespondToDeadline,
-  getDeadline
+  getDeadline,
+  addProgressUpdate,
+  getProgressUpdates,
 } = require("../controllers/projectController");
 
 const protect = require("../middleware/authMiddleware");
@@ -52,5 +54,13 @@ router.put("/:id/deadline/client", protect, authorizeRoles("client"), clientResp
 
 // Get deadline details
 router.get("/:id/deadline", protect, getDeadline);
+
+// ================= PROGRESS TRACKING =================
+
+// Freelancer adds progress
+router.post("/:id/progress", protect, authorizeRoles("freelancer"), addProgressUpdate);
+
+// View progress updates
+router.get("/:id/progress", protect, getProgressUpdates);
 
 module.exports = router;

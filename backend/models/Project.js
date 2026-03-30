@@ -54,7 +54,7 @@ const projectSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    // 👇 NEW FIELD FOR FREELANCER APPLICATION SYSTEM
+    // ================= FREELANCER APPLICATION =================
     applicants: [
       {
         freelancer: {
@@ -66,6 +66,19 @@ const projectSchema = new mongoose.Schema(
           required: true,
         },
         appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    // ================= PROGRESS TRACKING (NEW) =================
+    progressUpdates: [
+      {
+        text: {
+          type: String,
+        },
+        createdAt: {
           type: Date,
           default: Date.now,
         },

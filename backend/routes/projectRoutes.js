@@ -13,6 +13,7 @@ const {
   getDeadline,
   addProgressUpdate,
   getProgressUpdates,
+  addRating
 } = require("../controllers/projectController");
 
 const protect = require("../middleware/authMiddleware");
@@ -62,5 +63,7 @@ router.post("/:id/progress", protect, authorizeRoles("freelancer"), addProgressU
 
 // View progress updates
 router.get("/:id/progress", protect, getProgressUpdates);
+
+router.put("/:id/rate", protect, authorizeRoles("client"), addRating);
 
 module.exports = router;

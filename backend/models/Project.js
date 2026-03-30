@@ -72,7 +72,7 @@ const projectSchema = new mongoose.Schema(
       },
     ],
 
-    // ================= PROGRESS TRACKING (NEW) =================
+    // ================= PROGRESS TRACKING =================
     progressUpdates: [
       {
         text: {
@@ -84,6 +84,21 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
+
+    // ================= HYBRID SCORING SYSTEM (NEW) =================
+    clientRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+
+    aiScore: {
+      type: Number,
+    },
+
+    finalScore: {
+      type: Number,
+    },
 
     status: {
       type: String,

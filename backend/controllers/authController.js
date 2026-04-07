@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const TokenBlacklist = require("../models/TokenBlacklist");
 
 // ================= REGISTER USER =================
 exports.registerUser = async (req, res) => {
@@ -51,6 +52,19 @@ exports.registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= LOGOUT =================
+exports.logoutUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+
+    await TokenBlacklist.create({ token });
+
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 };

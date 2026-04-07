@@ -1,0 +1,159 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1a1a2e;
+  padding: 15px 40px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ── LOGO ── */
+.navbar-logo a {
+  color: #00d4ff;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+/* ── LINKS ── */
+.navbar-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.navbar-links li a {
+  color: #ffffff;
+  font-size: 14px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: block;
+}
+
+.navbar-links li a:hover {
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+}
+
+/* ── ACTIVE LINK ── */
+.nav-active {
+  color: #00d4ff !important;
+  background: rgba(0, 212, 255, 0.1) !important;
+}
+
+/* ── LOGIN BUTTON ── */
+.nav-login-btn {
+  background: transparent !important;
+  border: 2px solid #00d4ff !important;
+  color: #00d4ff !important;
+  padding: 7px 16px !important;
+  border-radius: 7px !important;
+  font-weight: 600 !important;
+  margin-left: 5px;
+}
+
+.nav-login-btn:hover {
+  background: #00d4ff !important;
+  color: #1a1a2e !important;
+}
+
+/* ── REGISTER BUTTON ── */
+.nav-register-btn {
+  background: #00d4ff !important;
+  color: #1a1a2e !important;
+  padding: 7px 16px !important;
+  border-radius: 7px !important;
+  font-weight: 700 !important;
+}
+
+.nav-register-btn:hover {
+  background: #00b8d9 !important;
+}
+
+/* ── HAMBURGER (mobile) ── */
+.hamburger {
+  display: none;
+  font-size: 26px;
+  color: white;
+  cursor: pointer;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .hamburger {
+    display: block;
+  }
+
+  .navbar-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 10px 0;
+  }
+
+  .navbar-links.open {
+    display: flex;
+  }
+
+  .navbar-links li {
+    width: 100%;
+  }
+
+  .navbar-links li a {
+    width: 100%;
+    padding: 10px 15px;
+  }
+}
+
+/* ── LOGOUT BUTTON ── */
+.nav-logout-btn {
+  background: transparent;
+  border: 2px solid #e53935;
+  color: #e53935;
+  padding: 7px 16px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-left: 5px;
+}
+
+.nav-logout-btn:hover {
+  background: #e53935;
+  color: white;
+}
+
+/* ── NOTIFICATION BELL ── */
+.nav-bell {
+  position: relative;
+  font-size: 20px;
+  padding: 5px 10px !important;
+}
+
+.bell-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #e53935;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

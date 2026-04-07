@@ -27,7 +27,7 @@ app.use(cors());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
-
+app.use("/api/blockchain", require("./routes/blockchainRoutes"));
 // Test Route
 app.get("/", (req, res) => {
   res.send("Escrow Platform API is Running...");

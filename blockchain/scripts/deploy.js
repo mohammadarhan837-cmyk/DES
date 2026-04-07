@@ -7,7 +7,7 @@ async function main() {
   const freelancerAddress = "0x0000000000000000000000000000000000000001";
 
   const escrow = await Escrow.deploy(freelancerAddress, {
-    value: hre.ethers.utils.parseEther("1")
+    value: hre.ethers.utils.parseEther("0.001")
   });
 
   await escrow.deployed();

@@ -8,6 +8,13 @@ const {
   applyToProject,
   getApplicants,
   selectFreelancer,
+  respondToDeadline,
+  clientRespondToDeadline,
+  getDeadline,
+  addProgressUpdate,
+  getProgressUpdates,
+  addRating,
+  matchFreelancers
 } = require("../controllers/projectController");
 
 const protect = require("../middleware/authMiddleware");
@@ -39,5 +46,27 @@ router.get("/:id/applicants", protect, authorizeRoles("client"), getApplicants);
 // Client selects freelancer for project
 router.put("/:id/select", protect, authorizeRoles("client"), selectFreelancer);
 
+// ================= DEADLINE NEGOTIATION =================
+
+// Freelancer responds (accept/reject)
+router.put("/:id/deadline/respond", protect, authorizeRoles("freelancer"), respondToDeadline);
+
+// Client responds to suggestion
+router.put("/:id/deadline/client", protect, authorizeRoles("client"), clientRespondToDeadline);
+
+// Get deadline details
+router.get("/:id/deadline", protect, getDeadline);
+
+// ================= PROGRESS TRACKING =================
+
+// Freelancer adds progress
+router.post("/:id/progress", protect, authorizeRoles("freelancer"), addProgressUpdate);
+
+// View progress updates
+router.get("/:id/progress", protect, getProgressUpdates);
+
+router.put("/:id/rate", protect, authorizeRoles("client"), addRating);
+
+router.get("/:id/match", protect, authorizeRoles("client"), matchFreelancers);
 
 module.exports = router;

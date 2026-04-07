@@ -1,0 +1,300 @@
+.escrow-page {
+  padding: 40px 60px;
+  min-height: 100vh;
+  background-color: #f4f6f9;
+}
+
+.back-btn {
+  background: white;
+  border: 2px solid #e0e0e0;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 25px;
+  transition: all 0.3s;
+  color: #333;
+}
+
+.back-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+
+.escrow-page h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  color: #888;
+  font-size: 15px;
+  margin-bottom: 30px;
+}
+
+/* ── ESCROW CARDS ── */
+.escrow-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.escrow-info-card {
+  border-radius: 16px;
+  padding: 25px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+
+.escrow-info-card span { font-size: 36px; }
+
+.escrow-info-card p {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.escrow-info-card h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.locked    { background: #fff8e1; border-left: 4px solid #f57f17; }
+.released  { background: #e8f5e9; border-left: 4px solid #2e7d32; }
+.remaining { background: #e3f2fd; border-left: 4px solid #1565c0; }
+.contract  { background: #f3e5f5; border-left: 4px solid #7b1fa2; }
+
+.contract-address {
+  font-size: 15px !important;
+  word-break: break-all;
+}
+
+/* ── CONTRACT BOX ── */
+.contract-box {
+  background: white;
+  border-radius: 16px;
+  padding: 25px 30px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+
+.contract-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.contract-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.contract-status {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contract-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.contract-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+
+.contract-row span { color: #888; }
+.contract-row strong { color: #1a1a2e; }
+
+/* ── ACTION BUTTONS ── */
+.escrow-actions {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.btn-release-payment {
+  padding: 14px 28px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-release-payment:hover { background: #1b5e20; }
+
+.btn-refund {
+  padding: 14px 28px;
+  background: #1565c0;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-refund:hover { background: #0d47a1; }
+
+.btn-raise-dispute {
+  padding: 14px 28px;
+  background: #fce4ec;
+  color: #c62828;
+  border: 2px solid #ef9a9a;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-raise-dispute:hover { background: #c62828; color: white; }
+
+/* ── TRANSACTION TABLE ── */
+.transaction-section {
+  background: white;
+  border-radius: 16px;
+  padding: 25px 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+
+.transaction-section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 20px;
+}
+
+.table-wrapper { overflow-x: auto; }
+
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.transaction-table thead tr { background-color: #f4f6f9; }
+
+.transaction-table th {
+  padding: 13px 16px;
+  text-align: left;
+  font-weight: 700;
+  color: #555;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.transaction-table td {
+  padding: 15px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #444;
+}
+
+.transaction-table tbody tr:hover { background: #f9fbff; }
+
+.tx-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tx-confirmed { background: #e8f5e9; color: #2e7d32; }
+.tx-pending   { background: #fff8e1; color: #f57f17; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.modal h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 15px;
+}
+
+.modal p {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 25px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel {
+  padding: 12px 25px;
+  background: #f4f6f9;
+  color: #555;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel:hover { background: #e0e0e0; }
+
+.btn-confirm {
+  padding: 12px 25px;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-confirm:hover { background: #00d4ff; color: #1a1a2e; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .escrow-page { padding: 25px 20px; }
+  .escrow-cards { grid-template-columns: repeat(2, 1fr); }
+  .escrow-actions { flex-direction: column; }
+}

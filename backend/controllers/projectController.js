@@ -21,7 +21,7 @@ exports.createProject = async (req, res) => {
       project,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -35,7 +35,7 @@ exports.getAllProjects = async (req, res) => {
 
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -54,7 +54,7 @@ exports.getProjectById = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -70,7 +70,7 @@ exports.applyToProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Check if freelancer already applied
+    // Prevent duplicate applications
     const alreadyApplied = project.applicants.find(
       (app) => app.freelancer.toString() === req.user._id.toString()
     );
@@ -93,7 +93,7 @@ exports.applyToProject = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -108,10 +108,17 @@ exports.getApplicants = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    // Only project owner (client) can view applicants
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to view applicants",
+      });
+    }
+
     res.json(project.applicants);
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -127,6 +134,24 @@ exports.selectFreelancer = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    // Only project owner can select freelancer
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to select freelancer",
+      });
+    }
+
+    // Check if freelancer applied
+    const applied = project.applicants.find(
+      (app) => app.freelancer.toString() === freelancerId
+    );
+
+    if (!applied) {
+      return res.status(400).json({
+        message: "Freelancer did not apply to this project",
+      });
+    }
+
     project.freelancer = freelancerId;
     project.status = "in-progress";
 
@@ -138,6 +163,233 @@ exports.selectFreelancer = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= FREELANCER RESPOND TO DEADLINE =================
+exports.respondToDeadline = async (req, res) => {
+  try {
+    const { action, newDeadline } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only assigned freelancer can respond
+    if (project.freelancer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to respond to deadline",
+      });
+    }
+
+    if (action === "accept") {
+      project.finalDeadline = project.proposedDeadline;
+      project.deadlineStatus = "finalized";
+    }
+
+    else if (action === "reject") {
+      if (!newDeadline) {
+        return res.status(400).json({
+          message: "Please provide a new deadline",
+        });
+      }
+
+      project.suggestedDeadline = newDeadline;
+      project.deadlineStatus = "negotiating";
+    }
+
+    await project.save();
+
+    res.json({
+      message: "Response submitted successfully",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= CLIENT RESPOND TO SUGGESTED DEADLINE =================
+exports.clientRespondToDeadline = async (req, res) => {
+  try {
+    const { action } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only client can respond
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    if (action === "accept") {
+      project.finalDeadline = project.suggestedDeadline;
+      project.deadlineStatus = "finalized";
+    }
+
+    await project.save();
+
+    res.json({
+      message: "Client response saved",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= GET DEADLINE DETAILS =================
+exports.getDeadline = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    res.json({
+      proposedDeadline: project.proposedDeadline,
+      suggestedDeadline: project.suggestedDeadline,
+      finalDeadline: project.finalDeadline,
+      deadlineStatus: project.deadlineStatus,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= ADD PROGRESS UPDATE =================
+exports.addProgressUpdate = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only assigned freelancer can update progress
+    if (project.freelancer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to update progress",
+      });
+    }
+
+    project.progressUpdates.push({ text });
+
+    // Update last update time
+    project.lastUpdate = new Date();
+
+    await project.save();
+
+    res.json({
+      message: "Progress updated successfully",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= GET PROGRESS UPDATES =================
+exports.getProgressUpdates = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    res.json(project.progressUpdates);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// ================= ADD RATING & CALCULATE SCORE =================
+exports.addRating = async (req, res) => {
+  try {
+    const { rating } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only client can rate
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to rate",
+      });
+    }
+
+    project.clientRating = rating;
+
+    // Dummy AI score (random for now)
+    project.aiScore = Math.floor(Math.random() * 5) + 1;
+
+    // Final score calculation
+    project.finalScore = (project.clientRating + project.aiScore) / 2;
+
+    await project.save();
+
+    res.json({
+      message: "Rating added successfully",
+      project,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= SKILL MATCHING =================
+const User = require("../models/User");
+
+exports.matchFreelancers = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const freelancers = await User.find({ role: "freelancer" });
+
+    const results = freelancers.map((freelancer) => {
+      const matchingSkills = freelancer.skills.filter((skill) =>
+        project.requiredSkills.includes(skill)
+      );
+
+      const matchPercentage =
+        (matchingSkills.length / project.requiredSkills.length) * 100;
+
+      return {
+        freelancerId: freelancer._id,
+        name: freelancer.name,
+        skills: freelancer.skills,
+        matchPercentage,
+      };
+    });
+
+    // Sort by best match
+    results.sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    res.json(results);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

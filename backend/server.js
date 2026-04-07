@@ -2,7 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
-
+require("./utils/cronJobs");
 
 // Middlewares
 const protect = require("./middleware/authMiddleware");

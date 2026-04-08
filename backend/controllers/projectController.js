@@ -1,19 +1,20 @@
 const Project = require("../models/Project");
+const User = require("../models/User");
 
-
-// ================= CREATE PROJECT (CLIENT ONLY) =================
+// ================= CREATE PROJECT =================
 exports.createProject = async (req, res) => {
   try {
-    const { title, description, requiredSkills, budget, proposedDeadline } =
+    const { title, description, budget, deadline, skills, requirements } =
       req.body;
 
     const project = await Project.create({
       client: req.user._id,
       title,
       description,
-      requiredSkills,
       budget,
-      proposedDeadline,
+      deadline,
+      skills,
+      requirements,
     });
 
     res.status(201).json({
@@ -25,13 +26,12 @@ exports.createProject = async (req, res) => {
   }
 };
 
-
 // ================= GET ALL PROJECTS =================
 exports.getAllProjects = async (req, res) => {
   try {
     const projects = await Project.find()
-      .populate("client", "name email")
-      .populate("freelancer", "name email");
+      .populate("client", "_id name")
+      .populate("freelancer", "_id name");
 
     res.json(projects);
   } catch (error) {
@@ -39,14 +39,12 @@ exports.getAllProjects = async (req, res) => {
   }
 };
 
-
 // ================= GET SINGLE PROJECT =================
 exports.getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
-      .populate("client", "name email")
-      .populate("freelancer", "name email")
-      .populate("applicants.freelancer", "name email skills");
+      .populate("client", "_id name")
+      .populate("freelancer", "_id name");
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
@@ -58,8 +56,42 @@ exports.getProjectById = async (req, res) => {
   }
 };
 
+// ================= UPDATE PROJECT =================
+exports.updateProject = async (req, res) => {
+  try {
+    const { title, description, budget, deadline, skills, requirements } =
+      req.body;
 
-// ================= FREELANCER APPLY TO PROJECT =================
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Only client can update
+    if (project.client.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    project.title = title || project.title;
+    project.description = description || project.description;
+    project.budget = budget || project.budget;
+    project.deadline = deadline || project.deadline;
+    project.skills = skills || project.skills;
+    project.requirements = requirements || project.requirements;
+
+    await project.save();
+
+    res.json({
+      message: "Project updated successfully",
+      project,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= APPLY TO PROJECT =================
 exports.applyToProject = async (req, res) => {
   try {
     const { proposal } = req.body;
@@ -70,7 +102,6 @@ exports.applyToProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Prevent duplicate applications
     const alreadyApplied = project.applicants.find(
       (app) => app.freelancer.toString() === req.user._id.toString()
     );
@@ -88,42 +119,31 @@ exports.applyToProject = async (req, res) => {
 
     await project.save();
 
-    res.json({
-      message: "Application submitted successfully",
-    });
-
+    res.json({ message: "Applied successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
-// ================= CLIENT VIEW APPLICANTS =================
+// ================= GET APPLICANTS =================
 exports.getApplicants = async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id)
-      .populate("applicants.freelancer", "name email skills");
+    const project = await Project.findById(req.params.id).populate(
+      "applicants.freelancer",
+      "_id name skills"
+    );
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Only project owner (client) can view applicants
-    if (project.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized to view applicants",
-      });
-    }
-
     res.json(project.applicants);
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
-// ================= CLIENT SELECT FREELANCER =================
+// ================= SELECT FREELANCER =================
 exports.selectFreelancer = async (req, res) => {
   try {
     const { freelancerId } = req.body;
@@ -134,26 +154,8 @@ exports.selectFreelancer = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Only project owner can select freelancer
-    if (project.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized to select freelancer",
-      });
-    }
-
-    // Check if freelancer applied
-    const applied = project.applicants.find(
-      (app) => app.freelancer.toString() === freelancerId
-    );
-
-    if (!applied) {
-      return res.status(400).json({
-        message: "Freelancer did not apply to this project",
-      });
-    }
-
     project.freelancer = freelancerId;
-    project.status = "in-progress";
+    project.status = "In Progress";
 
     await project.save();
 
@@ -161,16 +163,15 @@ exports.selectFreelancer = async (req, res) => {
       message: "Freelancer selected successfully",
       project,
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ================= FREELANCER RESPOND TO DEADLINE =================
-exports.respondToDeadline = async (req, res) => {
+// ================= ADD MILESTONE =================
+exports.addMilestone = async (req, res) => {
   try {
-    const { action, newDeadline } = req.body;
+    const { title, due } = req.body;
 
     const project = await Project.findById(req.params.id);
 
@@ -178,203 +179,85 @@ exports.respondToDeadline = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Only assigned freelancer can respond
-    if (project.freelancer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized to respond to deadline",
-      });
-    }
-
-    if (action === "accept") {
-      project.finalDeadline = project.proposedDeadline;
-      project.deadlineStatus = "finalized";
-    }
-
-    else if (action === "reject") {
-      if (!newDeadline) {
-        return res.status(400).json({
-          message: "Please provide a new deadline",
-        });
-      }
-
-      project.suggestedDeadline = newDeadline;
-      project.deadlineStatus = "negotiating";
-    }
+    project.milestones.push({
+      title,
+      due,
+      status: "Pending",
+    });
 
     await project.save();
 
     res.json({
-      message: "Response submitted successfully",
-      project,
+      message: "Milestone added",
+      milestones: project.milestones,
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ================= CLIENT RESPOND TO SUGGESTED DEADLINE =================
-exports.clientRespondToDeadline = async (req, res) => {
+// ================= UPDATE MILESTONE =================
+exports.updateMilestone = async (req, res) => {
   try {
-    const { action } = req.body;
+    const { milestoneId, status } = req.body;
 
     const project = await Project.findById(req.params.id);
 
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+    const milestone = project.milestones.id(milestoneId);
+
+    if (!milestone) {
+      return res.status(404).json({ message: "Milestone not found" });
     }
 
-    // Only client can respond
-    if (project.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized",
-      });
-    }
-
-    if (action === "accept") {
-      project.finalDeadline = project.suggestedDeadline;
-      project.deadlineStatus = "finalized";
-    }
+    milestone.status = status;
 
     await project.save();
 
     res.json({
-      message: "Client response saved",
-      project,
+      message: "Milestone updated",
+      milestone,
     });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-// ================= GET DEADLINE DETAILS =================
-exports.getDeadline = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    res.json({
-      proposedDeadline: project.proposedDeadline,
-      suggestedDeadline: project.suggestedDeadline,
-      finalDeadline: project.finalDeadline,
-      deadlineStatus: project.deadlineStatus,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-// ================= ADD PROGRESS UPDATE =================
-exports.addProgressUpdate = async (req, res) => {
-  try {
-    const { text } = req.body;
-
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    // Only assigned freelancer can update progress
-    if (project.freelancer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized to update progress",
-      });
-    }
-
-    project.progressUpdates.push({ text });
-
-    // Update last update time
-    project.lastUpdate = new Date();
-
-    await project.save();
-
-    res.json({
-      message: "Progress updated successfully",
-      project,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-// ================= GET PROGRESS UPDATES =================
-exports.getProgressUpdates = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    res.json(project.progressUpdates);
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
-// ================= ADD RATING & CALCULATE SCORE =================
+// ================= ADD RATING =================
 exports.addRating = async (req, res) => {
   try {
     const { rating } = req.body;
 
     const project = await Project.findById(req.params.id);
 
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    // Only client can rate
-    if (project.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized to rate",
-      });
-    }
-
     project.clientRating = rating;
-
-    // Dummy AI score (random for now)
     project.aiScore = Math.floor(Math.random() * 5) + 1;
-
-    // Final score calculation
     project.finalScore = (project.clientRating + project.aiScore) / 2;
 
     await project.save();
 
     res.json({
       message: "Rating added successfully",
-      project,
+      rating: project.finalScore,
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-// ================= SKILL MATCHING =================
-const User = require("../models/User");
 
+// ================= SKILL MATCHING =================
 exports.matchFreelancers = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
 
     const freelancers = await User.find({ role: "freelancer" });
 
     const results = freelancers.map((freelancer) => {
       const matchingSkills = freelancer.skills.filter((skill) =>
-        project.requiredSkills.includes(skill)
+        project.skills.includes(skill)
       );
 
       const matchPercentage =
-        (matchingSkills.length / project.requiredSkills.length) * 100;
+        (matchingSkills.length / project.skills.length) * 100;
 
       return {
         freelancerId: freelancer._id,
@@ -384,11 +267,9 @@ exports.matchFreelancers = async (req, res) => {
       };
     });
 
-    // Sort by best match
     results.sort((a, b) => b.matchPercentage - a.matchPercentage);
 
     res.json(results);
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

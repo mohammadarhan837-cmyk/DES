@@ -5,14 +5,12 @@ const {
   createProject,
   getAllProjects,
   getProjectById,
+  updateProject,
   applyToProject,
   getApplicants,
   selectFreelancer,
-  respondToDeadline,
-  clientRespondToDeadline,
-  getDeadline,
-  addProgressUpdate,
-  getProgressUpdates,
+  addMilestone,
+  updateMilestone,
   addRating,
   matchFreelancers
 } = require("../controllers/projectController");
@@ -20,53 +18,33 @@ const {
 const protect = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/roleMiddleware");
 
-
 // ================= CREATE PROJECT =================
-// Client only can create project
 router.post("/", protect, authorizeRoles("client"), createProject);
 
-
 // ================= VIEW PROJECTS =================
-// Anyone logged in can view projects
 router.get("/", protect, getAllProjects);
 router.get("/:id", protect, getProjectById);
 
+// ================= UPDATE PROJECT =================
+router.put("/:id", protect, authorizeRoles("client"), updateProject);
 
 // ================= FREELANCER APPLY =================
-// Freelancer applies to a project
 router.post("/:id/apply", protect, authorizeRoles("freelancer"), applyToProject);
 
-
 // ================= CLIENT VIEW APPLICANTS =================
-// Client can see freelancers who applied
 router.get("/:id/applicants", protect, authorizeRoles("client"), getApplicants);
 
-
 // ================= CLIENT SELECT FREELANCER =================
-// Client selects freelancer for project
 router.put("/:id/select", protect, authorizeRoles("client"), selectFreelancer);
 
-// ================= DEADLINE NEGOTIATION =================
+// ================= MILESTONES =================
+router.post("/:id/milestone", protect, authorizeRoles("client"), addMilestone);
+router.put("/:id/milestone", protect, updateMilestone);
 
-// Freelancer responds (accept/reject)
-router.put("/:id/deadline/respond", protect, authorizeRoles("freelancer"), respondToDeadline);
+// ================= RATING =================
+router.post("/:id/rating", protect, authorizeRoles("client"), addRating);
 
-// Client responds to suggestion
-router.put("/:id/deadline/client", protect, authorizeRoles("client"), clientRespondToDeadline);
-
-// Get deadline details
-router.get("/:id/deadline", protect, getDeadline);
-
-// ================= PROGRESS TRACKING =================
-
-// Freelancer adds progress
-router.post("/:id/progress", protect, authorizeRoles("freelancer"), addProgressUpdate);
-
-// View progress updates
-router.get("/:id/progress", protect, getProgressUpdates);
-
-router.put("/:id/rate", protect, authorizeRoles("client"), addRating);
-
-router.get("/:id/match", protect, authorizeRoles("client"), matchFreelancers);
+// ================= SKILL MATCH =================
+router.get("/:id/match", protect, matchFreelancers);
 
 module.exports = router;

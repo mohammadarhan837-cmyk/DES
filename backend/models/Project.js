@@ -24,37 +24,51 @@ const projectSchema = new mongoose.Schema(
       required: true,
     },
 
-    requiredSkills: [
-      {
-        type: String,
-      },
-    ],
-
+    // ✅ FRONTEND EXPECTS THIS
     budget: {
       type: Number,
       required: true,
     },
 
-    proposedDeadline: {
+    deadline: {
       type: Date,
       required: true,
     },
 
-    suggestedDeadline: {
-      type: Date,
-    },
+    // ✅ REQUIRED BY FRONTEND
+    skills: [
+      {
+        type: String,
+      },
+    ],
 
-    finalDeadline: {
-      type: Date,
-    },
+    requirements: [
+      {
+        type: String,
+      },
+    ],
 
-    deadlineStatus: {
+    // ✅ MILESTONES (VERY IMPORTANT)
+    milestones: [
+      {
+        title: String,
+        status: {
+          type: String,
+          default: "Pending",
+        },
+        due: Date,
+      },
+    ],
+
+    // ✅ STATUS (MATCH FRONTEND EXACTLY)
+    status: {
       type: String,
-      enum: ["pending", "negotiating", "finalized"],
-      default: "pending",
+      enum: ["Open", "In Progress", "Completed", "Disputed"],
+      default: "Open",
     },
 
-    // ================= FREELANCER APPLICATION =================
+    // ================= EXISTING FEATURES (KEEP) =================
+
     applicants: [
       {
         freelancer: {
@@ -63,7 +77,6 @@ const projectSchema = new mongoose.Schema(
         },
         proposal: {
           type: String,
-          required: true,
         },
         appliedAt: {
           type: Date,
@@ -72,39 +85,15 @@ const projectSchema = new mongoose.Schema(
       },
     ],
 
-    // ================= PROGRESS TRACKING =================
     progressUpdates: [
       {
-        text: {
-          type: String,
-        },
+        text: String,
         createdAt: {
           type: Date,
           default: Date.now,
         },
       },
     ],
-
-    // ================= HYBRID SCORING SYSTEM (NEW) =================
-    clientRating: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-
-    aiScore: {
-      type: Number,
-    },
-
-    finalScore: {
-      type: Number,
-    },
-
-    status: {
-      type: String,
-      enum: ["open", "in-progress", "completed", "terminated"],
-      default: "open",
-    },
 
     warningCount: {
       type: Number,
@@ -114,6 +103,11 @@ const projectSchema = new mongoose.Schema(
     lastUpdate: {
       type: Date,
     },
+
+    // ✅ SCORING (MAP TO FRONTEND RATING)
+    clientRating: Number,
+    aiScore: Number,
+    finalScore: Number,
   },
   { timestamps: true }
 );

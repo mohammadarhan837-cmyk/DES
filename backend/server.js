@@ -11,6 +11,7 @@ const authorizeRoles = require("./middleware/roleMiddleware");
 // Routes
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const escrowRoutes = require("./routes/escrowRoutes"); // ✅ NEW
 
 dotenv.config();
 
@@ -24,16 +25,20 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Routes
+// ================= ROUTES =================
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/blockchain", require("./routes/blockchainRoutes"));
-// Test Route
+app.use("/api/escrow", escrowRoutes); // ✅ NEW
+
+// ================= TEST ROUTE =================
 app.get("/", (req, res) => {
   res.send("Escrow Platform API is Running...");
 });
 
-// Protected Route (Any logged-in user)
+// ================= PROTECTED ROUTES =================
+
+// Any logged-in user
 app.get("/api/protected", protect, (req, res) => {
   res.json({
     message: "You accessed protected route",
@@ -41,7 +46,7 @@ app.get("/api/protected", protect, (req, res) => {
   });
 });
 
-// Client Only Route
+// Client only
 app.get(
   "/api/client-only",
   protect,
@@ -53,7 +58,7 @@ app.get(
   }
 );
 
-// Freelancer Only Route
+// Freelancer only
 app.get(
   "/api/freelancer-only",
   protect,
@@ -65,6 +70,7 @@ app.get(
   }
 );
 
+// ================= SERVER =================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

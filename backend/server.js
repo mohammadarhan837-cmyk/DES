@@ -12,6 +12,7 @@ const authorizeRoles = require("./middleware/roleMiddleware");
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const escrowRoutes = require("./routes/escrowRoutes"); // ✅ NEW
+const disputeRoutes = require("./routes/disputeRoutes");
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/blockchain", require("./routes/blockchainRoutes"));
 app.use("/api/escrow", escrowRoutes); // ✅ NEW
+app.use("/api/disputes", disputeRoutes);
 
 // ================= TEST ROUTE =================
 app.get("/", (req, res) => {

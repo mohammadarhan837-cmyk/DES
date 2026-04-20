@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Register.css';
 import Toast from '../components/Toast';
 import useToast from '../components/useToast';
+import axios from "../utils/axiosInstance";
 
 function Register() {
   const navigate = useNavigate();
@@ -23,41 +24,35 @@ function Register() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match!');
-      showToast('Passwords do not match!', 'error');
-      return;
-    }
+   try {
+    const res = await axios.post("/auth/register", {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role
+    });
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters!');
-      showToast('Password must be at least 6 characters!', 'error');
-      return;
-    }
-
-    setError('');
-    setLoading(true);
-
+    showToast(
+      res.data.message || "Registration successful! Please verify your email.",
+      "success"
+    );
+// 🔥 Redirect after 2 seconds
     setTimeout(() => {
-      setLoading(false);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userRole', formData.role);
-      localStorage.setItem('userName', formData.name);
+      navigate("/login");
+    }, 2000);
 
-      showToast('Account created successfully!', 'success');
+  } catch (err) {
+    console.log("REGISTER ERROR:", err.response?.data || err.message);
 
-      setTimeout(() => {
-        if (formData.role === 'client') {
-          navigate('/client-dashboard');
-        } else {
-          navigate('/freelancer-dashboard');
-        }
-      }, 1000);
-    }, 1000);
-  };
+    showToast(
+      err.response?.data?.message || "Registration failed",
+      "error"
+    );
+  }
+};
 
   return (
     <div className="auth-page">

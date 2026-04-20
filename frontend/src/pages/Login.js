@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from "../utils/axiosInstance";
 import '../styles/Login.css';
 import Toast from '../components/Toast';
 import useToast from '../components/useToast';
@@ -20,27 +21,50 @@ function Login() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setLoading(false);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userRole', formData.role);
-      localStorage.setItem('userName', 'Mohammad Tousif');
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }
+      );
 
-      showToast('Login successful! Redirecting...', 'success');
+      console.log("LOGIN SUCCESS:", res.data);
 
+      // ✅ Store user data in localStorage
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", res.data.user._id);
+      localStorage.setItem("userRole", res.data.user.role);
+      localStorage.setItem("userName", res.data.user.name);
+      localStorage.setItem("isLoggedIn", "true");
+
+      showToast("Login successful! Redirecting...", "success");
+
+      // Redirect based on role
       setTimeout(() => {
-        if (formData.role === 'client') {
-          navigate('/client-dashboard');
+        if (res.data.user.role === "client") {
+          navigate("/client-dashboard");
         } else {
-          navigate('/freelancer-dashboard');
+          navigate("/freelancer-dashboard");
         }
       }, 1000);
-    }, 1000);
+
+    } catch (err) {
+      console.log("LOGIN ERROR:", err.response?.data || err.message);
+
+      showToast(
+        err.response?.data?.message || "Login failed",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -139,3 +163,4 @@ function Login() {
 }
 
 export default Login;
+

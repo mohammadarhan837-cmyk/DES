@@ -1,48 +1,19 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/ClientDashboard.css';
 import Toast from '../components/Toast';
 import useToast from '../components/useToast';
-
-const dummyProjects = [
-  {
-    id: 1,
-    title: 'E-commerce Website',
-    freelancer: 'Ali Hassan',
-    budget: '0.5 ETH',
-    deadline: '2024-05-15',
-    status: 'In Progress'
-  },
-  {
-    id: 2,
-    title: 'Mobile App UI Design',
-    freelancer: 'Sara Khan',
-    budget: '0.3 ETH',
-    deadline: '2024-05-20',
-    status: 'Completed'
-  },
-  {
-    id: 3,
-    title: 'Smart Contract Audit',
-    freelancer: 'Not Assigned',
-    budget: '0.8 ETH',
-    deadline: '2024-06-01',
-    status: 'Open'
-  },
-  {
-    id: 4,
-    title: 'Backend API Development',
-    freelancer: 'Rahul Dev',
-    budget: '0.4 ETH',
-    deadline: '2024-05-30',
-    status: 'Disputed'
-  }
-];
+import axios from "../utils/axiosInstance";
 
 function ClientDashboard() {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
+
   const [showModal, setShowModal] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -50,16 +21,62 @@ function ClientDashboard() {
     deadline: ''
   });
 
+  // ✅ Fetch projects from backend
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await axios.get("/projects");
+        console.log("PROJECTS:", res.data);
+        setProjects(res.data || []);
+      } catch (err) {
+        console.log("ERROR:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
   const handleChange = (e) => {
     setNewProject({ ...newProject, [e.target.name]: e.target.value });
   };
 
-  const handlePostProject = (e) => {
-    e.preventDefault();
+  const handlePostProject = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await axios.post("/projects", {
+      title: newProject.title,
+      description: newProject.description,
+      budget: Number(newProject.budget),
+      deadline: newProject.deadline,
+    });
+
+
+    showToast("Project posted successfully! 🎉", "success");
+
     setShowModal(false);
-    setNewProject({ title: '', description: '', budget: '', deadline: '' });
-    showToast('Project posted successfully! 🎉', 'success');
-  };
+
+    setNewProject({
+      title: '',
+      description: '',
+      budget: '',
+      deadline: ''
+    });
+
+    // ✅ Immediately update UI
+    setProjects((prev) => [...prev, res.data]);
+
+  } catch (err) {
+    console.log("ERROR:", err.response?.data || err.message);
+
+    showToast(
+      err.response?.data?.message || "Failed to create project",
+      "error"
+    );
+  }
+};
 
   const getStatusClass = (status) => {
     switch (status) {
@@ -74,6 +91,7 @@ function ClientDashboard() {
   return (
     <div className="dashboard">
 
+{/* TOAST */}
       {toast && (
         <Toast
           message={toast.message}
@@ -82,7 +100,7 @@ function ClientDashboard() {
         />
       )}
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div className="dashboard-header">
         <div>
           <h1>👔 Client Dashboard</h1>
@@ -93,41 +111,49 @@ function ClientDashboard() {
         </button>
       </div>
 
-      {/* ── STATS ── */}
+      {/* STATS */}
       <div className="stats-grid">
         <div className="stat-card">
           <span>📋</span>
           <div>
-            <h3>4</h3>
+            <h3>{projects?.length || 0}</h3>
             <p>Total Projects</p>
           </div>
         </div>
         <div className="stat-card">
           <span>🔒</span>
           <div>
-            <h3>1.3 ETH</h3>
+            <h3>-</h3>
             <p>Funds in Escrow</p>
           </div>
         </div>
         <div className="stat-card">
           <span>✅</span>
           <div>
-            <h3>1</h3>
+            <h3>{projects.filter(p => p?.status === "Completed").length}</h3>
             <p>Completed</p>
           </div>
         </div>
         <div className="stat-card">
+          <span>🔃</span>
+          <div>
+            <h3>{projects.filter(p => p?.status === "In Progress").length}</h3>
+            <p>In Progress</p>
+          </div>
+        </div>     
+        <div className="stat-card">
           <span>⚠️</span>
           <div>
-            <h3>1</h3>
+            <h3>{projects?.filter(p => p?.status === "Disputed").length}</h3>
             <p>Disputed</p>
           </div>
         </div>
       </div>
 
-      {/* ── PROJECTS TABLE ── */}
+      {/* PROJECTS TABLE */}
       <div className="projects-section">
         <h2>My Projects</h2>
+    
         <div className="table-wrapper">
           <table className="projects-table">
             <thead>
@@ -141,99 +167,132 @@ function ClientDashboard() {
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {dummyProjects.map((project) => (
-                <tr key={project.id}>
-                  <td>{project.id}</td>
-                  <td>{project.title}</td>
-                  <td>{project.freelancer}</td>
-                  <td>{project.budget}</td>
-                  <td>{project.deadline}</td>
-                  <td>
-                    <span className={`status-badge
-                      ${getStatusClass(project.status)}`}>
-                      {project.status}
-                    </span>
-                  </td>
-                  <td className="action-btns">
-                    <button
-                      className="btn-view"
-                      onClick={() => navigate(`/project/${project.id}`)}
-                    >
-                      View
-                    </button>
-                    {project.status === 'In Progress' && (
-                      <button
-                        className="btn-release"
-                        onClick={() => navigate('/escrow-payment')}
-                      >
-                        Release
-                      </button>
-                    )}
-                    {project.status === 'In Progress' && (
-                      <button
-                        className="btn-dispute"
-                        onClick={() => navigate('/dispute')}
-                      >
-                        Dispute
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+<tbody>
+  {loading ? (
+    <tr>
+      <td colSpan="7">Loading...</td>
+    </tr>
+  ) : (
+    projects?.map((project, index) => {
+      if (!project) return null;
+
+      return (
+        <tr key={project._id}>
+          <td>{index + 1}</td>
+          <td>{project.title}</td>
+          <td>{project.freelancer?.name || "Not Assigned"}</td>
+          <td>{project.budget} ETH</td>
+          <td>{new Date(project.deadline).toLocaleDateString()}</td>
+
+          <td>
+            <span className={`status-badge ${getStatusClass(project.status)}`}>
+              {project.status}
+            </span>
+          </td>
+
+          <td className="action-btns">
+            <button
+              className="btn-view"
+              onClick={() => navigate(`/project/${project._id}`)}
+            >
+              View
+            </button>
+
+            {project.status === 'In Progress' && (
+              <>
+                <button
+                  className="btn-release"
+                  onClick={async () => {
+                    try {
+                      const res = await axios.post("/blockchain/release-payment", {
+                        projectId: project._id
+                      });
+
+                      showToast("Payment released successfully 🚀", "success");
+// 🔥 ADD THIS
+setProjects(prev =>
+  prev.map(p =>
+    p._id === project._id
+      ? { ...p, status: "Completed" }
+      : p
+  )
+);
+                      console.log("TX HASH:", res.data.txHash);
+
+                    } catch (err) {
+                      showToast(
+                        err.response?.data?.error || "Payment failed",
+                        "error"
+                      );
+                    }
+                  }}
+                >
+                  Release
+                </button>
+
+                <button
+                  className="btn-dispute"
+                  onClick={() => navigate('/dispute')}
+                >
+                  Dispute
+                </button>
+              </>
+            )}
+          </td>
+        </tr>
+      );
+    })
+  )}
+</tbody>
+
+
           </table>
         </div>
       </div>
 
-      {/* ── POST PROJECT MODAL ── */}
+      {/* POST PROJECT MODAL */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
               <h2>Post New Project</h2>
-              <button
-                className="close-btn"
-                onClick={() => setShowModal(false)}
-              >
-                ✕
-              </button>
+              <button className="close-btn" onClick={() => setShowModal(false)}>✕</button>
             </div>
+
             <form onSubmit={handlePostProject} className="modal-form">
               <div className="form-group">
                 <label>Project Title</label>
                 <input
                   type="text"
                   name="title"
-                  placeholder="e.g. Build an E-commerce Website"
                   value={newProject.title}
                   onChange={handleChange}
                   required
                 />
               </div>
+
               <div className="form-group">
-                <label>Project Description</label>
+                <label>Description</label>
                 <textarea
                   name="description"
-                  placeholder="Describe your project requirements..."
                   value={newProject.description}
                   onChange={handleChange}
-                  rows="4"
                   required
                 />
               </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>Budget (ETH)</label>
                   <input
                     type="text"
                     name="budget"
-                    placeholder="e.g. 0.5"
                     value={newProject.budget}
                     onChange={handleChange}
                     required
                   />
                 </div>
+
                 <div className="form-group">
                   <label>Deadline</label>
                   <input
@@ -245,15 +304,12 @@ function ClientDashboard() {
                   />
                 </div>
               </div>
+
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-cancel"
-                  onClick={() => setShowModal(false)}
-                >
+                <button type="button" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-post">
+                <button type="submit">
                   Post Project
                 </button>
               </div>

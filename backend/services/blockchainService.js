@@ -1,127 +1,110 @@
 const { ethers } = require("ethers");
 require("dotenv").config();
 
-// Provider (connect to Sepolia)
+// ================= PROVIDER =================
 const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
 
-// Wallet (your MetaMask)
+// ================= WALLET =================
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-// Contract ABI (paste here)
-const abi = [
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_freelancer",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "payable",
-      "type": "constructor"
-    },
-    {
-      "inputs": [],
-      "name": "amount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "client",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "freelancer",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "isCompleted",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "isFunded",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "refundClient",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "releasePayment",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+// ================= CONTRACT JSON =================
+const contractJSON = require("../../blockchain/artifacts/contracts/Escrow.sol/Escrow.json");
+
+// =================================================
+// 🚀 DEPLOY NEW ESCROW CONTRACT (PER PROJECT)
+// =================================================
+const deployEscrow = async (freelancerAddress, amount) => {
+  try {
+    console.log("🚀 Deploying new escrow contract...");
+
+    const factory = new ethers.ContractFactory(
+      contractJSON.abi,
+      contractJSON.bytecode,
+      wallet
+    );
+
+    const contract = await factory.deploy(freelancerAddress, {
+      value: ethers.parseEther(amount.toString()),
+    });
+
+    await contract.waitForDeployment();
+
+    const address = contract.target;
+
+    console.log("✅ Contract deployed at:", address);
+
+    return address;
+  } catch (error) {
+    console.error("❌ Deployment failed:", error.message);
+    throw error;
+  }
+};
+
+// =================================================
+// 🔗 GET CONTRACT INSTANCE (DYNAMIC)
+// =================================================
+const getContract = (address) => {
+  return new ethers.Contract(address, contractJSON.abi, wallet);
+};
+
+// =================================================
+// 💸 RELEASE PAYMENT
+// =================================================
+const releasePayment = async (contractAddress) => {
+  try {
+    const contract = getContract(contractAddress);
+
+    console.log("⚡ Checking contract state before release...");
+
+    const isCompleted = await contract.isCompleted();
+
+    if (isCompleted) {
+      throw new Error("Payment already released");
     }
-   ];
 
-// Contract instance
-const contract = new ethers.Contract(
-  process.env.CONTRACT_ADDRESS,
-  abi,
-  wallet
-);
+    const tx = await contract.releasePayment();
+    await tx.wait();
 
-// Functions
-const releasePayment = async () => {
-  const tx = await contract.releasePayment();
-  await tx.wait();
-  return tx.hash;
+    console.log("✅ Payment released:", tx.hash);
+
+    return tx.hash;
+  } catch (error) {
+    console.error("❌ Release error:", error.message);
+    throw error;
+  }
 };
 
-const refundClient = async () => {
-  const tx = await contract.refundClient();
-  await tx.wait();
-  return tx.hash;
+// =================================================
+// 🔄 REFUND CLIENT
+// =================================================
+const refundClient = async (contractAddress) => {
+  try {
+    const contract = getContract(contractAddress);
+
+    const isCompleted = await contract.isCompleted();
+
+    if (isCompleted) {
+      throw new Error("Cannot refund after completion");
+    }
+
+    const tx = await contract.refundClient();
+    await tx.wait();
+
+    console.log("✅ Refund successful:", tx.hash);
+
+    return tx.hash;
+  } catch (error) {
+    console.error("❌ Refund error:", error.message);
+    throw error;
+  }
 };
 
+// =================================================
+// 📦 EXPORTS
+// =================================================
 module.exports = {
+  deployEscrow,
   releasePayment,
   refundClient,
 };
+

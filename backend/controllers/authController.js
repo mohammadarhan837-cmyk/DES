@@ -34,8 +34,7 @@ exports.registerUser = async (req, res) => {
     });
 
     // Create verification link
-    const verificationLink = `http://10.10.70.215:5000/api/auth/verify/${verificationToken}`;
-
+    const verificationLink = `http://localhost:5000/api/auth/verify/${verificationToken}`;
     // Send email
     await sendEmail(
       email,
@@ -80,7 +79,7 @@ exports.verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.status(400).send("Invalid or expired token");
     }
 
     user.isVerified = true;
@@ -89,48 +88,68 @@ exports.verifyEmail = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: "Email verified successfully" });
+    // 🔥 Redirect to frontend login page
+    res.redirect("http://localhost:3000/login");
+
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).send("Server error");
   }
 };
 
 // ================= LOGIN USER =================
 exports.loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
-    const user = await User.findOne({ email });
+    // 1️⃣ Check user with email + role
+    const user = await User.findOne({ email, role });
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        message: "Invalid email or role",
+      });
     }
 
-    // Check if email verified
+    // 2️⃣ Check if email verified
     if (!user.isVerified) {
       return res.status(401).json({
         message: "Please verify your email before logging in",
       });
     }
 
-    // Check password
+    // 3️⃣ Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        message: "Invalid password",
+      });
     }
 
-    // Generate JWT
+    // 4️⃣ Generate JWT (include required fields)
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+  {
+    id: user._id,      // ✅ FIXED
+    role: user.role,
+    name: user.name,
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: "7d" }
+);
 
+    // 5️⃣ Send CLEAN response (IMPORTANT for frontend)
     res.json({
-      message: "Login successful",
       token,
-      user,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
+
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error(error);
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };

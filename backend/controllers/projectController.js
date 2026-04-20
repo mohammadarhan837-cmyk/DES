@@ -1,12 +1,31 @@
 const Project = require("../models/Project");
-const User = require("../models/User");
+const blockchain = require("../services/blockchainService");
 
 // ================= CREATE PROJECT =================
 exports.createProject = async (req, res) => {
   try {
-    const { title, description, budget, deadline, skills, requirements } =
-      req.body;
+    const {
+      title,
+      description,
+      budget,
+      deadline,
+      skills,
+      requirements,
+    } = req.body;
 
+    // ⚠️ For now we use a fixed freelancer wallet
+    // Later this can come from freelancer profile
+    const freelancerWallet =
+      "0x13A971266830990fF088E92D418e2c623cF16d42";
+
+    // 🔥 STEP 1: Deploy contract
+    const safeBudget = parseFloat(budget);
+    const contractAddress = await blockchain.deployEscrow(
+      freelancerWallet,
+      safeBudget
+    );
+
+    // 🔥 STEP 2: Create project
     const project = await Project.create({
       client: req.user._id,
       title,
@@ -15,14 +34,13 @@ exports.createProject = async (req, res) => {
       deadline,
       skills,
       requirements,
+      contractAddress, // ✅ important
     });
 
-    res.status(201).json({
-      message: "Project created successfully",
-      project,
-    });
+    res.status(201).json(project);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("❌ Create Project Error:", error.message);
+    res.status(500).json({ message: "Project creation failed" });
   }
 };
 
@@ -30,21 +48,21 @@ exports.createProject = async (req, res) => {
 exports.getAllProjects = async (req, res) => {
   try {
     const projects = await Project.find()
-      .populate("client", "_id name")
-      .populate("freelancer", "_id name");
+      .populate("client", "name email")
+      .populate("freelancer", "name email");
 
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Error fetching projects" });
   }
 };
 
-// ================= GET SINGLE PROJECT =================
+// ================= GET PROJECT BY ID =================
 exports.getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
-      .populate("client", "_id name")
-      .populate("freelancer", "_id name");
+      .populate("client", "name email")
+      .populate("freelancer", "name email");
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
@@ -52,16 +70,13 @@ exports.getProjectById = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Error fetching project" });
   }
 };
 
 // ================= UPDATE PROJECT =================
 exports.updateProject = async (req, res) => {
   try {
-    const { title, description, budget, deadline, skills, requirements } =
-      req.body;
-
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -70,76 +85,46 @@ exports.updateProject = async (req, res) => {
 
     // Only client can update
     if (project.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
-    project.title = title || project.title;
-    project.description = description || project.description;
-    project.budget = budget || project.budget;
-    project.deadline = deadline || project.deadline;
-    project.skills = skills || project.skills;
-    project.requirements = requirements || project.requirements;
+    Object.assign(project, req.body);
 
     await project.save();
 
-    res.json({
-      message: "Project updated successfully",
-      project,
-    });
+    res.json(project);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Update failed" });
   }
 };
 
 // ================= APPLY TO PROJECT =================
 exports.applyToProject = async (req, res) => {
   try {
-    const { proposal } = req.body;
-
     const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    const alreadyApplied = project.applicants.find(
-      (app) => app.freelancer.toString() === req.user._id.toString()
-    );
-
-    if (alreadyApplied) {
-      return res.status(400).json({
-        message: "You already applied to this project",
-      });
-    }
 
     project.applicants.push({
       freelancer: req.user._id,
-      proposal,
+      proposal: req.body.proposal,
     });
 
     await project.save();
 
     res.json({ message: "Applied successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Apply failed" });
   }
 };
 
 // ================= GET APPLICANTS =================
 exports.getApplicants = async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id).populate(
-      "applicants.freelancer",
-      "_id name skills"
-    );
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
+    const project = await Project.findById(req.params.id)
+      .populate("applicants.freelancer", "name email");
 
     res.json(project.applicants);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Error fetching applicants" });
   }
 };
 
@@ -150,127 +135,48 @@ exports.selectFreelancer = async (req, res) => {
 
     const project = await Project.findById(req.params.id);
 
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
     project.freelancer = freelancerId;
     project.status = "In Progress";
 
     await project.save();
 
-    res.json({
-      message: "Freelancer selected successfully",
-      project,
-    });
+    res.json({ message: "Freelancer selected" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Selection failed" });
   }
 };
 
 // ================= ADD MILESTONE =================
 exports.addMilestone = async (req, res) => {
   try {
-    const { title, due } = req.body;
-
     const project = await Project.findById(req.params.id);
 
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    project.milestones.push({
-      title,
-      due,
-      status: "Pending",
-    });
+    project.milestones.push(req.body);
 
     await project.save();
 
-    res.json({
-      message: "Milestone added",
-      milestones: project.milestones,
-    });
+    res.json(project);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to add milestone" });
   }
 };
 
 // ================= UPDATE MILESTONE =================
 exports.updateMilestone = async (req, res) => {
   try {
-    const { milestoneId, status } = req.body;
-
     const project = await Project.findById(req.params.id);
 
-    const milestone = project.milestones.id(milestoneId);
+    const milestone = project.milestones.id(req.body.milestoneId);
 
-    if (!milestone) {
-      return res.status(404).json({ message: "Milestone not found" });
+    if (milestone) {
+      milestone.status = req.body.status;
     }
 
-    milestone.status = status;
-
     await project.save();
 
-    res.json({
-      message: "Milestone updated",
-      milestone,
-    });
+    res.json(project);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to update milestone" });
   }
 };
 
-// ================= ADD RATING =================
-exports.addRating = async (req, res) => {
-  try {
-    const { rating } = req.body;
-
-    const project = await Project.findById(req.params.id);
-
-    project.clientRating = rating;
-    project.aiScore = Math.floor(Math.random() * 5) + 1;
-    project.finalScore = (project.clientRating + project.aiScore) / 2;
-
-    await project.save();
-
-    res.json({
-      message: "Rating added successfully",
-      rating: project.finalScore,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// ================= SKILL MATCHING =================
-exports.matchFreelancers = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    const freelancers = await User.find({ role: "freelancer" });
-
-    const results = freelancers.map((freelancer) => {
-      const matchingSkills = freelancer.skills.filter((skill) =>
-        project.skills.includes(skill)
-      );
-
-      const matchPercentage =
-        (matchingSkills.length / project.skills.length) * 100;
-
-      return {
-        freelancerId: freelancer._id,
-        name: freelancer.name,
-        skills: freelancer.skills,
-        matchPercentage,
-      };
-    });
-
-    results.sort((a, b) => b.matchPercentage - a.matchPercentage);
-
-    res.json(results);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};

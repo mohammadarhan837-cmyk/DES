@@ -11,8 +11,6 @@ const {
   selectFreelancer,
   addMilestone,
   updateMilestone,
-  addRating,
-  matchFreelancers
 } = require("../controllers/projectController");
 
 const protect = require("../middleware/authMiddleware");
@@ -40,11 +38,5 @@ router.put("/:id/select", protect, authorizeRoles("client"), selectFreelancer);
 // ================= MILESTONES =================
 router.post("/:id/milestone", protect, authorizeRoles("client"), addMilestone);
 router.put("/:id/milestone", protect, updateMilestone);
-
-// ================= RATING =================
-router.post("/:id/rating", protect, authorizeRoles("client"), addRating);
-
-// ================= SKILL MATCH =================
-router.get("/:id/match", protect, matchFreelancers);
 
 module.exports = router;

@@ -99,7 +99,9 @@ const projectSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
+contractAddress: {
+  type: String,
+},
     lastUpdate: {
       type: Date,
     },

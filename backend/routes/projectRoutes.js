@@ -4,11 +4,15 @@ const router = express.Router();
 const {
   createProject,
   getAllProjects,
+  getClientProjects,
+  getFreelancerProjects,
   getProjectById,
   updateProject,
   applyToProject,
   getApplicants,
   selectFreelancer,
+  submitWork,
+  acceptWork,
   addMilestone,
   updateMilestone,
 } = require("../controllers/projectController");
@@ -21,6 +25,8 @@ router.post("/", protect, authorizeRoles("client"), createProject);
 
 // ================= VIEW PROJECTS =================
 router.get("/", protect, getAllProjects);
+router.get("/my-projects", protect, authorizeRoles("client"), getClientProjects);
+router.get("/my-work", protect, authorizeRoles("freelancer"), getFreelancerProjects);
 router.get("/:id", protect, getProjectById);
 
 // ================= UPDATE PROJECT =================
@@ -34,6 +40,12 @@ router.get("/:id/applicants", protect, authorizeRoles("client"), getApplicants);
 
 // ================= CLIENT SELECT FREELANCER =================
 router.put("/:id/select", protect, authorizeRoles("client"), selectFreelancer);
+
+// ================= FREELANCER SUBMIT WORK =================
+router.post("/:id/submit", protect, authorizeRoles("freelancer"), submitWork);
+
+// ================= CLIENT ACCEPT WORK (triggers on-chain release) =================
+router.post("/:id/accept", protect, authorizeRoles("client"), acceptWork);
 
 // ================= MILESTONES =================
 router.post("/:id/milestone", protect, authorizeRoles("client"), addMilestone);

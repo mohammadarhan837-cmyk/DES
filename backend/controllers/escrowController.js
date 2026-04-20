@@ -1,4 +1,5 @@
 const Escrow = require("../models/Escrow");
+const Project = require("../models/Project");
 
 // ================= GET ESCROW =================
 exports.getEscrow = async (req, res) => {
@@ -20,9 +21,17 @@ exports.lockPayment = async (req, res) => {
   try {
     const { projectId, amount, clientWallet, freelancerWallet } = req.body;
 
+    // 🔥 Look up the real contract address from the Project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const contractAddress = project.contractAddress || "0xPENDING";
+
     const escrow = await Escrow.create({
       projectId,
-      contractAddress: "0x123456789ABC", // dummy for now
+      contractAddress,
       totalLocked: amount,
       clientWallet,
       freelancerWallet,

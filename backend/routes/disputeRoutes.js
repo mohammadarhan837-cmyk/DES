@@ -4,19 +4,22 @@ const router = express.Router();
 const {
   createDispute,
   getDisputes,
+  getMyDisputes,
   resolveDispute,
 } = require("../controllers/disputeController");
 
 const protect = require("../middleware/authMiddleware");
-const authorizeRoles = require("../middleware/roleMiddleware");
 
 // Create dispute
 router.post("/", protect, createDispute);
 
-// Get all disputes
+// Get all disputes (admin use)
 router.get("/", protect, getDisputes);
 
-// Resolve dispute (admin/client)
+// Get disputes scoped to current user's projects
+router.get("/my", protect, getMyDisputes);
+
+// Resolve dispute (client only – enforced in controller)
 router.put("/resolve", protect, resolveDispute);
 
 module.exports = router;

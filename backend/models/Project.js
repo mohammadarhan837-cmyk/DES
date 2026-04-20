@@ -110,6 +110,19 @@ contractAddress: {
     clientRating: Number,
     aiScore: Number,
     finalScore: Number,
+
+    // ✅ SUBMISSION (Freelancer submits work for review)
+    submissionLink: {
+      type: String,
+    },
+    submissionNote: {
+      type: String,
+    },
+    submissionStatus: {
+      type: String,
+      enum: ["None", "Submitted", "Accepted", "Rejected"],
+      default: "None",
+    },
   },
   { timestamps: true }
 );

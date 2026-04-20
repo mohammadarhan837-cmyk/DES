@@ -1,50 +1,95 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Dispute.css';
 import Spinner from '../components/Spinner';
 import Toast from '../components/Toast';
 import useToast from '../components/useToast';
+import axios from '../utils/axiosInstance';
 
 function Dispute() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast, showToast, hideToast } = useToast();
+
+  // Read optional pre-selected projectId from query param
+  const params = new URLSearchParams(location.search);
+  const preSelectedProjectId = params.get('projectId') || '';
+
   const [pageLoading, setPageLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [createdDispute, setCreatedDispute] = useState(null);
+
+  // Projects list for the selector
+  const [myProjects, setMyProjects] = useState([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+
   const [formData, setFormData] = useState({
-    project: '',
+    project: preSelectedProjectId,
     reason: '',
     description: '',
-    evidence: ''
   });
+
+  // ── FETCH USER'S PROJECTS ──
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const role = localStorage.getItem('userRole');
+      try {
+        let res;
+        if (role === 'client') {
+          res = await axios.get('/projects/my-projects');
+        } else {
+          res = await axios.get('/projects/my-work');
+        }
+        // Only show projects that are In Progress or Disputed (relevant for dispute)
+        const relevant = (res.data || []).filter(
+          p => p.status === 'In Progress' || p.status === 'Disputed'
+        );
+        setMyProjects(relevant);
+      } catch (err) {
+        showToast('Failed to load projects', 'error');
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+    fetchProjects();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.project) {
+      showToast('Please select a project', 'error');
+      return;
+    }
     setPageLoading(true);
-    setTimeout(() => {
-      setPageLoading(false);
+    try {
+      const res = await axios.post('/disputes', {
+        projectId: formData.project,
+        reason: formData.reason,
+        description: formData.description,
+      });
+      setCreatedDispute(res.data.dispute);
       setSubmitted(true);
       showToast('Dispute submitted successfully!', 'success');
-    }, 1500);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to submit dispute', 'error');
+    } finally {
+      setPageLoading(false);
+    }
   };
 
   return (
     <div className="dispute-page">
       {pageLoading && <Spinner message="Submitting dispute..." />}
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+      <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
       <div className="dispute-container">
 
@@ -93,17 +138,23 @@ function Dispute() {
 
                 <div className="form-group">
                   <label>Select Project</label>
-                  <select
-                    name="project"
-                    value={formData.project}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">-- Select a Project --</option>
-                    <option value="ecommerce">E-commerce Website</option>
-                    <option value="mobile">Mobile App UI Design</option>
-                    <option value="api">REST API Development</option>
-                  </select>
+                  {projectsLoading ? (
+                    <p style={{ color: '#888', padding: '0.5rem 0' }}>Loading projects...</p>
+                  ) : (
+                    <select
+                      name="project"
+                      value={formData.project}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">-- Select a Project --</option>
+                      {myProjects.map((p) => (
+                        <option key={p._id} value={p._id}>
+                          {p.title} ({p.status})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -135,22 +186,6 @@ function Dispute() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Evidence Link (GitHub / Drive)</label>
-                  <input
-                    type="text"
-                    name="evidence"
-                    placeholder="https://drive.google.com/..."
-                    value={formData.evidence}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Upload Evidence File (Optional)</label>
-                  <input type="file" />
-                </div>
-
                 <button type="submit" className="submit-btn">
                   Submit Dispute
                 </button>
@@ -165,8 +200,23 @@ function Dispute() {
                 Your dispute has been submitted successfully.
                 Our team will review it and get back to you shortly.
               </p>
+              {createdDispute && (
+                <div style={{
+                  background: '#1a1a2e',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  marginTop: '1rem',
+                  textAlign: 'left',
+                  fontSize: '0.85rem'
+                }}>
+                  <p><strong>Dispute ID:</strong> {createdDispute._id}</p>
+                  <p><strong>Status:</strong> {createdDispute.status}</p>
+                  <p><strong>Reason:</strong> {createdDispute.reason}</p>
+                </div>
+              )}
               <button
                 className="submit-btn"
+                style={{ marginTop: '1.5rem' }}
                 onClick={() => navigate(-1)}
               >
                 Go Back

@@ -17,7 +17,6 @@ function Register() {
     role: 'client'
   });
 
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -25,34 +24,37 @@ function Register() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      return showToast("Passwords do not match", "error");
+    }
 
-   try {
-    const res = await axios.post("/auth/register", {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: formData.role
-    });
+    setLoading(true);
+    try {
+      await axios.post("/auth/register", {
 
-    showToast(
-      res.data.message || "Registration successful! Please verify your email.",
-      "success"
-    );
-// 🔥 Redirect after 2 seconds
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
 
-  } catch (err) {
-    console.log("REGISTER ERROR:", err.response?.data || err.message);
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
+      });
 
-    showToast(
-      err.response?.data?.message || "Registration failed",
-      "error"
-    );
-  }
-};
+      showToast("Registered successfully! Please verify your email.", "success");
+
+      // Redirect to OTP verification
+      setTimeout(() => {
+        navigate("/verify-otp", { state: { email: formData.email } });
+      }, 1500);
+
+    } catch (err) {
+      console.log("REGISTER ERROR:", err.response?.data || err.message);
+      showToast(err.response?.data?.message || "Registration failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <div className="auth-page">
@@ -169,14 +171,15 @@ function Register() {
               </div>
             </div>
 
-            {error && <p className="error-msg">⚠️ {error}</p>}
+
 
             <div className="form-group terms">
               <label>
                 <input type="checkbox" required />
-                &nbsp; I agree to the <a href="#">Terms & Conditions</a>
+                &nbsp; I agree to the <span style={{ color: '#00d4ff', cursor: 'pointer' }}>Terms & Conditions</span>
               </label>
             </div>
+
 
             <button
               type="submit"

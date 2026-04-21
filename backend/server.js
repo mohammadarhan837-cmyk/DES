@@ -27,11 +27,14 @@ app.use(express.json());
 app.use(cors());
 
 // ================= ROUTES =================
-app.use("/api/auth", authRoutes);
-app.use("/api/projects", projectRoutes);
-app.use("/api/blockchain", require("./routes/blockchainRoutes"));
-app.use("/api/escrow", escrowRoutes); // ✅ NEW
-app.use("/api/disputes", disputeRoutes);
+app.use("/api/auth",        authRoutes);
+app.use("/api/projects",    projectRoutes);
+app.use("/api/blockchain",  require("./routes/blockchainRoutes"));
+app.use("/api/escrow",      escrowRoutes);
+app.use("/api/disputes",    disputeRoutes);
+app.use("/api/negotiations",require("./routes/negotiationRoutes")); // ✅ NEW
+app.use("/api/progress",    require("./routes/progressRoutes"));    // ✅ NEW
+
 
 // ================= TEST ROUTE =================
 app.get("/", (req, res) => {
@@ -73,7 +76,7 @@ app.get(
 );
 
 // ================= SERVER =================
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

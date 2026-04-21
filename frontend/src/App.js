@@ -19,7 +19,12 @@ import Dispute from './pages/Dispute';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import BrowseProjects from './pages/BrowseProjects';
+import VerifyOTP from './pages/VerifyOTP';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import LinkWallet from './pages/LinkWallet';
 import NotFound from './pages/NotFound';
+
 
 // CSS
 import './App.css';
@@ -35,6 +40,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/link-wallet" element={
+          <ProtectedRoute><LinkWallet /></ProtectedRoute>
+        } />
+
 
         {/* ── PROTECTED ROUTES ── */}
         <Route path="/client-dashboard" element={

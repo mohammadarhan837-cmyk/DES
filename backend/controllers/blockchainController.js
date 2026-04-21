@@ -16,15 +16,12 @@ const releasePayment = async (req, res) => {
       return res.status(400).json({ error: "No contract linked to project" });
     }
 
-    const txHash = await blockchain.releasePayment(
-      project.contractAddress
-    );
-
-    // 🔥 update status after success
+    // ✅ Payment is now released via MetaMask in the frontend.
+    // The backend just synchronizes the status now.
     project.status = "Completed";
     await project.save();
 
-    res.json({ success: true, txHash });
+    res.json({ success: true, message: "Project status updated to Completed" });
 
   } catch (err) {
     console.error("❌ Release Error:", err.message);

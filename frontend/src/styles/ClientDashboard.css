@@ -299,35 +299,47 @@
 }
 
 .btn-cancel {
-  padding: 12px 25px;
-  background: #f4f6f9;
-  color: #555;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-cancel:hover { background: #e0e0e0; }
-
-.btn-post {
-  padding: 12px 25px;
-  background: #1a1a2e;
-  color: white;
-  border: none;
-  border-radius: 10px;
+  padding: 12px 28px;
+  background: white;
+  color: #1a1a2e;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-cancel:hover { 
+  background: #f8f9fa;
+  border-color: #1a1a2e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.btn-post {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #00d4ff 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
 }
 
 .btn-post:hover {
-  background: #00d4ff;
-  color: #1a1a2e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+  filter: brightness(1.1);
 }
+
+.btn-post:active {
+  transform: translateY(0);
+}
+
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {

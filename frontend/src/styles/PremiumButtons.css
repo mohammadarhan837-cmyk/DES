@@ -1,0 +1,82 @@
+/* Premium Buttons for EscrowChain */
+
+.btn-premium {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  background: linear-gradient(135deg, #00d4ff 0%, #0083fe 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+  background: linear-gradient(135deg, #33e0ff 0%, #1a91ff 100%);
+}
+
+.btn-premium:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(0, 212, 255, 0.3);
+}
+
+.btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: all 0.5s;
+}
+
+.btn-premium:hover::before {
+  left: 100%;
+}
+
+/* Secondary Premium (for "Cancel" or "View") */
+.btn-premium-outline {
+  padding: 11px 27px;
+  background: transparent;
+  border: 2px solid #00d4ff;
+  color: #00d4ff;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-premium-outline:hover {
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Danger Premium (for "Terminate") */
+.btn-premium-danger {
+  background: linear-gradient(135deg, #ff4d4d 0%, #f44336 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.btn-premium-danger:hover {
+  box-shadow: 0 8px 25px rgba(244, 67, 54, 0.5);
+  background: linear-gradient(135deg, #ff6666 0%, #d32f2f 100%);
+}

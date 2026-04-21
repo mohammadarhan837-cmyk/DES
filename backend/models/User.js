@@ -7,15 +7,15 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Optional for wallet-only users
     email: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true, // allows multiple nulls
     },
 
     password: {
       type: String,
-      required: true,
     },
 
     role: {
@@ -24,41 +24,41 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    skills: [
-      {
-        type: String,
-      },
-    ],
+    skills: [{ type: String }],
 
-    // 🔐 Email Verification Fields
+    // 🔐 OTP Verification (6-digit)
     isVerified: {
       type: Boolean,
       default: false,
     },
+    otp: { type: String },
+    otpExpires: { type: Date },
 
-    verificationToken: {
+    // 🔑 Password Reset
+    resetPasswordOTP: { type: String },
+    resetPasswordExpires: { type: Date },
+
+    // 🦊 MetaMask / Web3 Identity
+    walletAddress: {
+      type: String,
+      sparse: true, // allows multiple nulls
+      lowercase: true,
+    },
+    isWalletLocked: {
+      type: Boolean,
+      default: false,
+    },
+    nonce: {
+      type: String,  // random challenge string for signature verification
+    },
+    phoneNumber: {
       type: String,
     },
 
-    verificationTokenExpires: {
-      type: Date,
-    },
-
-    // 📊 Scoring Fields (for future ML integration)
-    rating: {
-      type: Number,
-      default: 0,
-    },
-
-    aiScore: {
-      type: Number,
-      default: 0,
-    },
-
-    finalScore: {
-      type: Number,
-      default: 0,
-    },
+    // 📊 Scoring
+    rating:     { type: Number, default: 0 },
+    aiScore:    { type: Number, default: 0 },
+    finalScore: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -26,14 +26,11 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        }
-      );
+      const res = await axios.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
 
       console.log("LOGIN SUCCESS:", res.data);
 
@@ -62,6 +59,14 @@ function Login() {
         err.response?.data?.message || "Login failed",
         "error"
       );
+
+      // If unverified, redirect to OTP page
+      if (err.response?.data?.unverified) {
+        setTimeout(() => {
+          navigate("/verify-otp", { state: { email: formData.email } });
+        }, 1500);
+      }
+
     } finally {
       setLoading(false);
     }
@@ -154,6 +159,9 @@ function Login() {
 
           <p className="auth-switch">
             Don't have an account? <Link to="/register">Register here</Link>
+          </p>
+          <p className="auth-terms">
+            By logging in, you agree to our <span className="terms-link">Terms & Conditions</span>
           </p>
         </div>
       </div>
